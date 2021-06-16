@@ -26,7 +26,7 @@ class Colony:
             self.row = row
             self.col = col
             self.colony = colony
-            # self.pos_memory = OrderedDict()
+            self.pos_memory = OrderedDict()
             self.special = special
 
         def __str__(self) -> str:
@@ -255,11 +255,7 @@ class Colony:
         return arr.astype(dtype=np.dtype(np.uint8), casting='unsafe', copy=True)
 
     def generate_pheromone_image(self, iteration): #Gera a camada de feromônio atual com o número de iteção dado para o nome
-        """
-        Generates the current pheromone layer with the given iteration number for the name
-        :param iteration: integer - goes with naming the file
-        :return: Nothing
-        """
+        #Paramêtro iteration integer - Vai nomear o arquivo
         base_dir = os.path.dirname(self.img_path)
         base = os.path.basename(self.img_path)
         fname = base.split('.')[0]
@@ -268,24 +264,20 @@ class Colony:
 
         final_path = os.path.join(iterations_path, str(iteration) + "_" + base)
         arr = self.convert_to_gray(self.pheromone[:, :, -1])
-        # old_max = arr.max()
-        # old_min = arr.min()
-        # for i, j in np.ndindex(arr.shape):
-        #     arr[i, j] = ((255 * (arr[i, j] - old_min)) / (old_max - old_min))
+        old_max = arr.max()
+        old_min = arr.min()
+        for i, j in np.ndindex(arr.shape):
+            arr[i, j] = ((255 * (arr[i, j] - old_min)) / (old_max - old_min))
         generate_image_from_array(path=final_path, array=arr)
 
-    def clean_up(self, dir_path):
-        """
-        Clears the directory dir_path
-        :param dir_path: directory to clear
-        :return: Nothing
-        """
+    def clean_up(self, dir_path): #Limpa o diretório dir_path
+        #Paramêtro dir_path - diretório para limpar
         print("cleaning " + dir_path + " ...")
         entries = None
         try:
             entries = os.listdir(path=dir_path)
         except FileNotFoundError as FNFE:
-            # print(type(FNFE).__name__ + ": " + argv[0] + ": " + str(FNFE), file=sys.stderr)
+            print(type(FNFE).__name__ + ": " + argv[0] + ": " + str(FNFE), file=sys.stderr)
             print("Nothing to clean!")
             return
         for entry in entries:
@@ -296,23 +288,19 @@ class Colony:
                 break
         print("Done cleaning!")
 
-    def iterate(self, iterations=-1):
-        """
-        Performs iterations number of iterations of the ACO algorithm
-        :param iterations: number of iterations to perform
-        :return: Nothing
-        """
+    def iterate(self, iterations=-1): #Executa iteções, número de iterações do algoritmo ACO
+        #Paramêtro iterations: número de iterações para performance
         if iterations <= 0:
             iterations = max(self.img.shape[0], self.img.shape[1])
         print("Iterations: " + str(iterations))
         for i in range(iterations):
             print("Iteration: " + str(i + 1))
             if ((i + 1) % 10 == 0):
-                # print("Iteration: " + str(i + 1))
+                print("Iteration: " + str(i + 1))
                 self.generate_pheromone_image(iteration=(i + 1))
             for ant in self.ants:
                 ant.deposit_pheromone()
-            if (True):  # ((i + 1) % 10 == 0):
+            if (True): ((i + 1) % 10 == 0):
                 print(self)
             self.adjust_pheromone()
         print("Max: " + str(self.pheromone[:, :, -1].max()))
@@ -320,13 +308,9 @@ class Colony:
         print(self.convert_to_gray(self.pheromone[:, :, -1]))
 
 
-def generate_image_from_array (path, array, invert=True):
-    """
-    Inverts the array scheme and physically saves it
-    :param path: directory to store
-    :param array: 2d ndarray of data
-    :return: Nothing
-    """
+def generate_image_from_array (path, array, invert=True): #Inverte o esquema do array e o salva fisicamente
+    #Paramêtro path - diretório para armazenamento
+    #Paramêtro array - 2D array de dados
     dir_base = os.path.dirname(path)
     Path(dir_base).mkdir(parents=True, exist_ok=True)
     img = Image.fromarray(array, 'L')
@@ -371,4 +355,4 @@ if __name__ == "__main__":
         clean_path = os.path.join(argv[1], "Iterations", item.split('.')[0])
         c.clean_up(dir_path=clean_path)
         c.iterate(iterations=-1)
-        # c.adjust_pheromone()
+        c.adjust_pheromone()
