@@ -22,8 +22,7 @@ class Colony:
     directions = [N, NE, E, SE, S, SW, W, NW]
 
     class Ant:
-        def __init__(self, row: int, col: int, colony: "Colony", special=False) -> None:
-            """Each ant is given an initial position and the colony it belongs to"""
+        def __init__(self, row: int, col: int, colony: "Colony", special=False) -> None:#Cada "formiga" recebe uma posição inicial e se atribui a colônia que pertence"
             self.row = row
             self.col = col
             self.colony = colony
@@ -36,33 +35,24 @@ class Colony:
 
         def probabilistic_choice(self, positions: list, probabilities: list) -> tuple:
             return random.choices(population=positions, weights=probabilities, k=1)[0]
-            # keys = list(probabilities_to_pos.keys())
-            # max_key = max(keys)
-            # return probabilities_to_pos[max_key]
-            # keys.sort(reverse=True)
-            # for key in keys:
-            #     if probabilities_to_pos[key] not in self.colony.pos_memory:
-            #         return probabilities_to_pos[key]
-            # return None
+             keys = list(probabilities_to_pos.keys())
+             max_key = max(keys)
+             return probabilities_to_pos[max_key]
+             keys.sort(reverse=True)
+             for key in keys:
+                 if probabilities_to_pos[key] not in self.colony.pos_memory:
+                     return probabilities_to_pos[key]
+             return None
 
-        def index_probability(self, index: tuple):
-            """
-            Takes the pheromone at an index and raises it to the alpha control
-            Takes the intensity at an index and raises it to the beta control
-            :return: their product
-            """
-            row, col = index
+        def index_probability(self, index: tuple):#Pega a atribuição feromônio em um índice e o eleva ao controle alpha
+            row, col = index #Pega-se a intensidade em um índice para  o controle beta retornando o produto deles
             return (self.colony.pheromone[row, col, -1] ** self.colony.alpha) * \
                    (self.colony.intensities[row, col] ** self.colony.beta)
 
-        def get_index_probabilities(self):
-            """
-            Gets all the probabilities for pixels around the ant
-            :return: numerator values for the probability equation with corresponding positions
-            """
-            numerators = list()
+        def get_index_probabilities(self): #Obtém-se todas as probabilidades de pixels em torna dos valores formiga, retornando o enumerador para a equação
+            numerators = list() 
             positions = list()
-            # random.shuffle(self.colony.directions)
+            random.shuffle(self.colony.directions)
             for d in random.sample(self.colony.directions, len(self.colony.directions)):
                 x = self.row + d[0]
                 y = self.col + d[1]
@@ -72,35 +62,26 @@ class Colony:
                     continue
                 positions.append((x, y))
                 numerator = self.index_probability((x, y))
-                # positions[numerator] = pos
+                positions[numerator] = pos
                 numerators.append(numerator)
-            return numerators, positions
+            return numerators, positions #Retorna o enumerado para a equação com a probabilidade das posições correspondentes
 
-        def get_max_probability_pos(self):
-            """
-            Finds the maximum probability from the surrounding squares that are not in memory
-            :return: position of the max probability square
-            """
+        def get_max_probability_pos(self): #Encontra a probabilidade máxima dos quadrados circundantes que não estão na memória
             numerators, positions = self.get_index_probabilities()
             denominator = sum(numerators)
             if (denominator == 0):
                 return None
-            # TODO: Evaluate if this needs to be * 100 or not to convert to %?
             probabilities = list((x / denominator) * 100 for x in numerators)
-            # pos_dict = dict(zip(probabilities, positions))
-            return self.probabilistic_choice(positions=positions, probabilities=probabilities)
+            pos_dict = dict(zip(probabilities, positions))
+            return self.probabilistic_choice(positions=positions, probabilities=probabilities) #Retorna a posição do quadrado de probabilidade máxima
 
         def update_memory(self):
             self.colony.pos_memory[(self.row, self.col)] = None
             if (len(self.colony.pos_memory) > self.colony.ant_mem):
                 self.colony.pos_memory.popitem(last=False)
 
-        def deposit_pheromone(self):
-            """
-            Deposits pheromone at location if threshold is exceeded, otherwise teleports ant elsewhere
-            :return: Nothing
-            """
-            # self.update_memory()
+        def deposit_pheromone(self): #Deposita o feromônio no local se o limite for excedido, caso contrário, teletransporta a formiga para outro lugar
+            self.update_memory()
             pos = self.get_max_probability_pos()
             if (pos == None):
                 while (True):
@@ -108,13 +89,13 @@ class Colony:
                     if pos not in self.colony.pos_memory:
                         self.row, self.col = pos
                         break
-                # self.update_memory()
+                self.update_memory()
                 return
-                # self.row = random.randrange(self.colony.img.shape[0])
-                # self.col = random.randrange(self.colony.img.shape[1])
+                self.row = random.randrange(self.colony.img.shape[0])
+                self.col = random.randrange(self.colony.img.shape[1])
             row, col = pos
-            # for i, j in np.ndindex(self.colony.pheromone[:2]):
-            #     self.colony.pheromone[i, j, self.colony.memory_index] = 0
+            for i, j in np.ndindex(self.colony.pheromone[:2]):
+                self.colony.pheromone[i, j, self.colony.memory_index] = 0
             if (self.colony.intensities[row, col] >= self.colony.b):
                 self.row = row
                 self.col = col
@@ -126,9 +107,9 @@ class Colony:
                     if pos not in self.colony.pos_memory:
                         self.row, self.col = pos
                         break
-            # self.update_memory()
-                # self.row = random.randrange(self.colony.img.shape[0])
-                # self.col = random.randrange(self.colony.img.shape[1])
+            self.update_memory()
+                self.row = random.randrange(self.colony.img.shape[0])
+                self.col = random.randrange(self.colony.img.shape[1])
 
     def __init__(self, img_path: str, img: np.ndarray, ant_count=-1, pheromone_evaporation_constant=0.1,
                  pheromone_memory_constant=20, ant_memory_constant=20, minimum_pheromone_constant=0.0001,
@@ -144,58 +125,54 @@ class Colony:
         self.set_pixel_intensities()
         self.generate_intensities_image(invert=False, binary=True)
         self.ants = list()
-        # M x N x m + 1 matrix, m + 1 entry contains total pheromone from other memory layers
+        #M x N x m + 1 matrix, m + 1 entrada contém feromônio total de outras camadas de memória
         self.pheromone = np.zeros(shape=(img.shape[0], img.shape[1], pheromone_memory_constant + 1))
         self.m = pheromone_memory_constant
         self.pos_memory = OrderedDict()
         self.ant_mem = ant_memory_constant * ant_count
         self.tau_min = minimum_pheromone_constant
-        # Initialize total pheromone layer to min amount
+        #Inicializa a camada de feromônio total para a quantidade mínima
         for i, j in np.ndindex(self.pheromone.shape[:2]):
             self.pheromone[i, j, -1] = self.tau_min
         # self.pheromone.fill(self.tau_min)
         self.p = pheromone_evaporation_constant
         self.b = intensity_threshold_value if intensity_threshold_value > 0 else self.intensities.mean()
         self.memory_index = 0
-        # sets ants on all distinct random pixels
-        # pairs = set()
+        #Define as formigas em todos os pixels aleatórios distintos
+        pairs = set()
         first = True
         for ant in range(ant_count):
             pair = None
             while (True):
-                # nonlocal pair
+                #Par não local
                 pair = (random.randrange(self.img.shape[0]), random.randrange(self.img.shape[1]))
                 if pair not in self.pos_memory:
                     self.pos_memory[pair] = None
-                    # pairs.add(pair)
+                    pairs.add(pair)
                     break
             row, col = pair
             self.ants.append(Colony.Ant(row=row, col=col, colony=self, special=first))
             if (first == True): # (ant % 100 == 0):
                 first = False
-                # self.ants.append(Colony.Ant(row=row, col=col, colony=self, special=first))
-            # else:
-            #     self.ants.append(Colony.Ant(row=row, col=col, colony=self))
+                self.ants.append(Colony.Ant(row=row, col=col, colony=self, special=first))
+            else:
+                self.ants.append(Colony.Ant(row=row, col=col, colony=self))
 
     def __str__(self) -> str:
         ants_list = ['Selection of Ants:\n']
-        # count = 0;
+        count = 0;
         for i, ant in enumerate(self.ants):
             if (ant.special == True):
                 ants_list.extend(['\t', ant.__str__(), '\n'])
-        # ants_list.append(self.pheromone[:, :, -1].__str__())
-        # ants_list.append('\n')
-        # ants_list.append(self.pheromone[:, :, self.memory_index].__str__())
+        ants_list.append(self.pheromone[:, :, -1].__str__())
+        ants_list.append('\n')
+        ants_list.append(self.pheromone[:, :, self.memory_index].__str__())
         return ''.join(ants_list)
 
-    def pixel_intensity(self, row: int, col: int) -> float:
-        """
-        Caclulates the intensity/importance of a given pixel by looking at surrounding pixels
-        :param row: x index for the pixel
-        :param col: y index for the pixel
-        :return: Normalized maximum intensity
-        """
-        # (1 / self.i_max)
+    def pixel_intensity(self, row: int, col: int) -> float: #Calcula a intensidade/importância de um determinado pixel olhando para os pixels adjacentes
+        (1 / self.i_max) 
+        #Parâmetro row - índice x para o pixel
+        #Parêmetro col - índice y para o pixel
         return max(
             abs(int(self.img[row - 2, col - 2]) - int(self.img[row + 2, col + 2])) if (row - 2 >= 0 and col - 2 >= 0 and row + 2 < self.img.shape[0] and col + 2 < self.img.shape[1]) else 0,
             abs(int(self.img[row - 2, col - 1]) - int(self.img[row + 2, col + 1])) if (row - 2 >= 0 and col - 1 >= 0 and row + 2 < self.img.shape[0] and col + 1 < self.img.shape[1]) else 0,
@@ -216,64 +193,47 @@ class Colony:
         max_val = self.intensities.max()
         for i, j in np.ndindex(self.intensities.shape):
             self.intensities[i, j] /= max_val
-        return self.intensities
+        return self.intensities #Retorna intensidade máxima normalizada
 
     def normalize_intensities(self, zscore=True):
         return stats.zscore(self.intensities) if zscore else self.perform_max_normalization_intentsities()
 
-    def set_pixel_intensities(self):
-        """
-        Creates and stores all of the pixel intensities, no need to keep recomputing since the value never changes
-        :return: Nothing
-        """
+    def set_pixel_intensities(self): #Cria e armazena todas as intensidade de pixels, sem necessidade de manter a computação, pois o valor nunca muda
         for i, j in np.ndindex(self.img.shape):
             self.intensities[i, j] = self.pixel_intensity(i, j)
         self.intensities = self.normalize_intensities(zscore=False)
         print("Intensity: type: " + str(self.intensities.dtype) + " max: " + str(self.intensities.max()) + " min: " +
               str(self.intensities.min()) + " average intensity: " + str(self.intensities.mean()))
         print(self.intensities)
-        # Image.fromarray(self.intensities, 'L').show()
+        Image.fromarray(self.intensities, 'L').show()
 
-    def generate_intensities_image(self, invert=True, binary=True):
-        """
-        Creates and stores the intensities matrix as a normal gray-scale image
-        :return: Nothing
-        """
+    def generate_intensities_image(self, invert=True, binary=True): #Cria e armazena a matriz de intensidades como uma imagem normal em escala de cinza
         base_dir = os.path.dirname(self.img_path)
         intensities_path = os.path.join(base_dir, "Intensities")
 
-        # Path.mkdir(intensities_path, parents=True, exist_ok=True)
+        Path.mkdir(intensities_path, parents=True, exist_ok=True)
 
         base = os.path.basename(self.img_path)
-        # adjusted_path = os.path.join(os.path.dirname(self.img_path), "intensities_", base)
+        adjusted_path = os.path.join(os.path.dirname(self.img_path), "intensities_", base)
         final_path = os.path.join(intensities_path, base)
         arr = self.convert_to_gray(self.intensities, binary=binary)
         generate_image_from_array(path=final_path, array=arr, invert=invert)
-        # Image.fromarray(self.intensities, 'L').save(final_path)
+        Image.fromarray(self.intensities, 'L').save(final_path)
 
-    def adjust_pheromone(self): # (self, row, column):
-        """
-        Globally adjusts the pheromone levels based off the sums of the memory layers and the old pheromone levels
-        :return: Nothing
-        """
+    def adjust_pheromone(self, row, column): #Ajusta globalmente os níveis de feromônios com base nas somas das camadas de memória e os níveis de feromônios antigos
         if (self.memory_index >= self.m - 1):
             self.memory_index = 0
         else:
             self.memory_index += 1
         for i, j in np.ndindex(self.pheromone.shape[:2]):
-            # print(ij, self.pheromone[ij][!=20])
+            print(ij, self.pheromone[ij][!=20])
             deltas = self.pheromone[i, j, :-1]  # The memory layers
-            # print(stack)
+            print(stack)
             self.pheromone[i, j, -1] = max((1 - self.p) * self.pheromone[i, j, -1] + sum(deltas), self.tau_min)
             self.pheromone[i, j, self.memory_index] = 0
 
-    # @staticmethod
-    def convert_to_gray(self, arr: np.ndarray, binary=True):
-        """
-        Converts a given 2d ndarray to gray-scaling
-        :param arr: 2d ndarray
-        :return: arr
-        """
+    def convert_to_gray(self, arr: np.ndarray, binary=True):#Converte uma determinada matriz 2D em escala de cinza
+        #Parâmetro arr - Matriz 2D
         arr_fixed = np.zeros(shape=arr.shape, dtype=np.dtype(np.uint8))
         old_max = arr.max()
         old_min = arr.min()
@@ -292,9 +252,9 @@ class Colony:
         print("\tNew type: " + str(arr_fixed.dtype) + " new min: " + str(arr_fixed.min()) + " new max: " +
               str(arr_fixed.max()) + " new range: " + str(arr_fixed.max() - arr_fixed.min()) + " new average: " +
               str(arr_fixed.mean()))
-        return arr_fixed  # arr.astype(dtype=np.dtype(np.uint8), casting='unsafe', copy=True)
+        return arr.astype(dtype=np.dtype(np.uint8), casting='unsafe', copy=True)
 
-    def generate_pheromone_image(self, iteration):
+    def generate_pheromone_image(self, iteration): #Gera a camada de feromônio atual com o número de iteção dado para o nome
         """
         Generates the current pheromone layer with the given iteration number for the name
         :param iteration: integer - goes with naming the file
